@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VolleyFit 15</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#1565C0"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>VolleyFit 15</h1>
+    <button id="installBtn" class="install-btn">Instalar</button>
+  </header>
+
+  <nav class="menu">
+    <button data-view="plan" class="active">Plan 15 días</button>
+    <button data-view="nutrition">Nutrición</button>
+    <button data-view="calendar">Calendario</button>
+    <button data-view="track">Seguimiento</button>
+    <button data-view="pdf">PDF / Export</button>
+  </nav>
+
+  <main id="app">
+    <section id="view-plan" class="view active">
+      <h2>Plan de Entrenamiento</h2>
+      <div id="planList"></div>
+    </section>
+
+    <section id="view-nutrition" class="view">
+      <h2>Nutrición</h2>
+      <div id="nutrition"></div>
+    </section>
+
+    <section id="view-calendar" class="view">
+      <h2>Calendario 15 días</h2>
+      <div id="calendar"></div>
+      <p class="help">Tocá un día para marcarlo como completado y dejar notas.</p>
+    </section>
+
+    <section id="view-track" class="view">
+      <h2>Seguimiento</h2>
+      <form id="trackForm">
+        <label>Día: <input type="number" id="tDay" min="1" max="15" value="1"></label>
+        <label>Tipo:
+          <select id="tType">
+            <option value="entreno">Entreno</option>
+            <option value="comida">Comida</option>
+            <option value="nota">Nota</option>
+          </select>
+        </label>
+        <label>Notas: <input id="tNotes" placeholder="Observaciones"></label>
+        <label>Carga (kg): <input id="tLoad" type="number" step="0.5"></label>
+        <label>Reps: <input id="tReps" type="number" min="0"></label>
+        <label><input type="checkbox" id="tDone"> Completado</label>
+        <button type="submit">Agregar / Guardar</button>
+      </form>
+
+      <h3>Registros</h3>
+      <ul id="records"></ul>
+      <button id="clearRecords" class="danger">Borrar todos los registros</button>
+    </section>
+
+    <section id="view-pdf" class="view">
+      <h2>Exportar</h2>
+      <p>Puedes descargar el PDF del plan o exportar tus registros en JSON.</p>
+      <button id="downloadPdf">Descargar PDF (versión simple)</button>
+      <button id="exportJson">Exportar registros (JSON)</button>
+    </section>
+  </main>
+
+  <footer>
+    <small>VolleyFit 15 — PWA demo • Proyecto lista para GitHub Pages</small>
+  </footer>
+
+<script>
+
+// --- Data (plan + nutrition) ---
+
+const PLAN = [
+{
+  day: 1,
+    title: "Fuerza de Tren Inferior (Enfocado en salto y estabilidad)",
+    details: `
+      <h3>Calentamiento (8 min)</h3>
+      <ul>
+        <li><input type="checkbox"> Movilidad de cadera y tobillo</li>
+        <li><input type="checkbox"> 2×15 sentadillas con peso corporal</li>
+        <li><input type="checkbox"> Skips + saltos suaves en el lugar</li>
+      </ul>
+
+      <h3>Fuerza</h3>
+      <ul>
+        <li><input type="checkbox"> Sentadilla con barra – 4×5 (80% 1RM)</li>
+        <li><input type="checkbox"> Peso muerto rumano – 4×6</li>
+        <li><input type="checkbox"> Zancadas caminando con mancuernas – 3×10 por pierna</li>
+        <li><input type="checkbox"> Prensa – 3×8</li>
+        <li><input type="checkbox"> Elevación de gemelos – 4×12</li>
+      </ul>
+
+      <h3>Potencia</h3>
+      <ul>
+        <li><input type="checkbox"> Saltos al cajón – 4×5</li>
+        <li><input type="checkbox"> Saltos laterales sobre línea – 3×20 s</li>
+      </ul>
+
+      <h3>Core estabilizador</h3>
+      <ul>
+        <li><input type="checkbox"> Plancha frontal – 3×40 s</li>
+        <li><input type="checkbox"> Plancha lateral – 3×30 s por lado</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 2,
+    title: "Tren Superior + Hombros (Prevención de lesiones)",
+    details: `
+      <h3>Calentamiento</h3>
+      <ul>
+        <li><input type="checkbox"> Rotadores externos con banda – 3×15</li>
+        <li><input type="checkbox"> Movilidad de hombro</li>
+      </ul>
+
+      <h3>Fuerza</h3>
+      <ul>
+        <li><input type="checkbox"> Press banca o mancuerna – 4×5</li>
+        <li><input type="checkbox"> Dominadas o jalón al pecho – 4×6</li>
+        <li><input type="checkbox"> Remo con barra – 4×6–8</li>
+        <li><input type="checkbox"> Press militar – 3×6</li>
+        <li><input type="checkbox"> Face pulls – 3×15</li>
+        <li><input type="checkbox"> Rotadores externos con mancuerna – 2×12 por brazo</li>
+      </ul>
+
+      <h3>Core</h3>
+      <ul>
+        <li><input type="checkbox"> Rueda abdominal o crunch cable – 3×10–12</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 3,
+    title: "Agilidad + Potencia + Pliometría",
+    details: `
+      <h3>Agilidad</h3>
+      <ul>
+        <li><input type="checkbox"> Escalera de coordinación – 5 combinaciones × 2</li>
+        <li><input type="checkbox"> Sprints cortos 10–15 m – 6 reps</li>
+        <li><input type="checkbox"> Cambios de dirección (Z/T) – 4×20 m</li>
+      </ul>
+
+      <h3>Potencia de salto</h3>
+      <ul>
+        <li><input type="checkbox"> Drop jumps – 4×4</li>
+        <li><input type="checkbox"> Salto vertical con brazos – 4×5</li>
+        <li><input type="checkbox"> Multisaltos laterales – 3×20 s</li>
+      </ul>
+
+      <h3>Fuerza ligera</h3>
+      <ul>
+        <li><input type="checkbox"> Sentadilla frontal 3×5 (60%)</li>
+        <li><input type="checkbox"> Remo TRX – 3×12</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 4,
+    title: "Fuerza Total + Movilidad",
+    details: `
+      <h3>Fuerza</h3>
+      <ul>
+        <li><input type="checkbox"> Peso muerto clásico – 4×4</li>
+        <li><input type="checkbox"> Sentadilla goblet – 3×10</li>
+        <li><input type="checkbox"> Fondos en paralelas – 3×10</li>
+        <li><input type="checkbox"> Remo con mancuerna – 3×10</li>
+        <li><input type="checkbox"> Press militar sentado – 3×8</li>
+      </ul>
+
+      <h3>Movilidad profunda (10 min)</h3>
+      <ul>
+        <li><input type="checkbox"> Cadera</li>
+        <li><input type="checkbox"> Tobillo</li>
+        <li><input type="checkbox"> Columna torácica</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 5,
+    title: "Recuperación Activa",
+    details: `
+      <ul>
+        <li><input type="checkbox"> 20–30 min bici o caminata</li>
+        <li><input type="checkbox"> Estiramientos</li>
+        <li><input type="checkbox"> Trabajo de hombro preventivo</li>
+        <li><input type="checkbox"> Sauna/hielo (opcional)</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 6,
+    title: "Descanso activo / Técnica",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Técnica suave</li>
+        <li><input type="checkbox"> Movilidad general</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 7,
+    title: "Descanso total o técnica muy ligera",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Descanso absoluto</li>
+        <li><input type="checkbox"> Técnica muy suave (opcional)</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 8,
+    title: "Inferior Explosivo",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Sentadilla con salto – 4×4</li>
+        <li><input type="checkbox"> Sentadilla barra – 3×4 (60%)</li>
+        <li><input type="checkbox"> Zancadas – 3×8</li>
+        <li><input type="checkbox"> Gemelos – 3×12</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 9,
+    title: "Superior Explosivo",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Press banca velocidad – 5×3</li>
+        <li><input type="checkbox"> Remo – 4×6</li>
+        <li><input type="checkbox"> Jalón pecho – 3×8</li>
+        <li><input type="checkbox"> Press militar – 3×5</li>
+        <li><input type="checkbox"> Face pulls – 3×15</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 10,
+    title: "Último Día Pesado",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Sentadilla – 3×3 (70–80%)</li>
+        <li><input type="checkbox"> Peso muerto – 3×3</li>
+        <li><input type="checkbox"> Remo con barra – 3×5</li>
+        <li><input type="checkbox"> Fondos – 3×8</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 11,
+    title: "Pliometría + Agilidad",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Escalera – 10 min</li>
+        <li><input type="checkbox"> Sprints 6×10 m</li>
+        <li><input type="checkbox"> Saltos verticales – 4×4</li>
+        <li><input type="checkbox"> Saltos laterales – 3×20 s</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 12,
+    title: "Técnica + Movilidad",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Saques, recepción, desplazamientos</li>
+        <li><input type="checkbox"> Estiramientos profundos</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 13,
+    title: "Activación Corta",
+    details: `
+      <ul>
+        <li><input type="checkbox"> 20 min potencia baja</li>
+        <li><input type="checkbox"> Saltos suaves</li>
+        <li><input type="checkbox"> Core</li>
+        <li><input type="checkbox"> Estiramiento</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 14,
+    title: "Descanso Total",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Descanso completo</li>
+      </ul>
+    `
+  },
+
+  {
+    day: 15,
+    title: "¡Competencia!",
+    details: `
+      <ul>
+        <li><input type="checkbox"> Movilidad</li>
+        <li><input type="checkbox"> Sprints cortos</li>
+        <li><input type="checkbox"> Saltos suaves</li>
+      </ul>
+    `
+  }
+];
+
+const NUTRITION = {
+  breakfasts:["Avena + banana + nueces + 3 huevos","Pan integral + palta + huevo poché"],
+  lunches:["Pollo 200-250g + arroz integral + ensalada","Carne magra + batata + verduras"],
+  snacks:["Yogur griego + fruta + almendras","Licuado proteico + banana + avena"],
+  dinners:["Pescado 200g + verduras + batata","Omelette 3 huevos + ensalada + pan integral"]
+};
+
+// --- UI Handling ---
+function q(sel){return document.querySelector(sel)}
+function qa(sel){return document.querySelectorAll(sel)}
+
+function renderPlan(){
+  const container = q('#planList'); container.innerHTML='';
+  PLAN.forEach(d=>{
+    const card = document.createElement('div'); card.className='card';
+    card.innerHTML = `<h3>Día ${d.day} — ${d.title}</h3><p>${d.details}</p><button data-day="${d.day}" class="markDay">Marcar completado</button>`;
+    container.appendChild(card);
+  });
+  
+}
+function renderNutrition(){
+  const c = q('#nutrition'); c.innerHTML='';
+  for(const [k,v] of Object.entries(NUTRITION)){
+    const s = document.createElement('div'); s.className='nut';
+    s.innerHTML = `<h4>${k}</h4><ul>${v.map(x=>' <li>'+x+'</li>').join('')}</ul>`;
+    c.appendChild(s);
+  }
+}
+
+// --- Calendar ---
+function renderCalendar(){
+  const cal = q('#calendar'); cal.innerHTML='';
+  for(let i=1;i<=15;i++){
+    const d = document.createElement('div'); d.className='cal-day';
+    d.dataset.day=i;
+    const title = PLAN.find(p=>p.day===i)?.title||`Día ${i}`;
+    const done = getDayDone(i);
+    d.innerHTML = `<strong>Día ${i}</strong><div class="title">${title}</div><div class="done">${done? '✅ Completado' : '❌ Pendiente'}</div>`;
+    d.addEventListener('click', ()=> {
+      const note = prompt('Notas para el día '+i+' (vacío para no cambiar):','');
+      const completed = confirm('Marcar como completado?');
+      saveRecord({day:i, type:'entreno', notes: note||'', completed: completed?1:0, carga:null, reps:null});
+      renderCalendar(); renderRecords();
+    });
+    cal.appendChild(d);
+  }
+}
+function getDayDone(day){
+  const recs = JSON.parse(localStorage.getItem('vf_records')||'[]');
+  return recs.some(r=>r.day===day && r.completed);
+}
+
+// --- Tracking (localStorage) ---
+function loadRecords(){ return JSON.parse(localStorage.getItem('vf_records')||'[]'); }
+function saveRecords(list){ localStorage.setItem('vf_records', JSON.stringify(list)); }
+function saveRecord(obj){
+  const list = loadRecords();
+  obj.id = Date.now();
+  obj.date = new Date().toISOString();
+  list.unshift(obj);
+  saveRecords(list);
+}
+function renderRecords(){
+  const ul = q('#records'); ul.innerHTML='';
+  const list = loadRecords();
+  if(!list.length) { ul.innerHTML='<li>No hay registros aún.</li>'; return; }
+  list.forEach(r=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>Día ${r.day}</strong> - ${r.type} - ${r.completed?'✅':''} ${r.notes||''} ${r.carga?'- '+r.carga+'kg':''} ${r.reps?'- '+r.reps+' reps':''} <button class="del" data-id="${r.id}">Eliminar</button>`;
+    ul.appendChild(li);
+  });
+  qa('.del').forEach(b=>b.addEventListener('click', e=>{
+    const id = Number(e.target.dataset.id);
+    const list = loadRecords().filter(x=>x.id!==id);
+    saveRecords(list); renderRecords(); renderCalendar();
+  }));
+}
+
+// --- Form submit
+q('#trackForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const obj = {
+    day: Number(q('#tDay').value),
+    type: q('#tType').value,
+    notes: q('#tNotes').value,
+    carga: q('#tLoad').value?Number(q('#tLoad').value):null,
+    reps: q('#tReps').value?Number(q('#tReps').value):null,
+    completed: q('#tDone').checked?1:0
+  };
+  saveRecord(obj);
+  renderRecords(); renderCalendar();
+  alert('Registro guardado');
+  q('#tNotes').value=''; q('#tLoad').value=''; q('#tReps').value='';
+});
+
+// clear records
+q('#clearRecords').addEventListener('click', ()=>{
+  if(confirm('Borrar todos los registros?')) { localStorage.removeItem('vf_records'); renderRecords(); renderCalendar(); }
+});
+
+// menu navigation
+qa('.menu button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    qa('.menu button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const view = b.dataset.view;
+    qa('.view').forEach(v=>v.classList.remove('active'));
+    q(`#view-${view}`).classList.add('active');
+  });
+});
+
+// download PDF (simple)
+q('#downloadPdf').addEventListener('click', ()=>{
+  let text = 'VolleyFit 15 - Plan de 15 días\\n\\n';
+  PLAN.forEach(p=> text += `Día ${p.day} - ${p.title}\\n${p.details}\\n\\n`);
+  const blob = new Blob([text], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='volleyfit_plan.txt'; document.body.appendChild(a); a.click(); a.remove();
+});
+
+// export JSON
+q('#exportJson').addEventListener('click', ()=>{
+  const data = loadRecords();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='volleyfit_records.json'; document.body.appendChild(a); a.click(); a.remove();
+});
+
+// install prompt for PWA (deferred)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e)=> {
+  e.preventDefault();
+  deferredPrompt = e;
+  q('#installBtn').style.display='inline-block';
+});
+q('#installBtn').addEventListener('click', async ()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const resp = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    q('#installBtn').style.display='none';
+  } else {
+    alert('Abrí esta página en Safari y usá Compartir → Añadir a pantalla de inicio en iPhone.');
+  }
+});
+
+// init
+renderPlan(); renderNutrition(); renderCalendar(); renderRecords();
+</script>
+
+<script>
+// register service worker (double-check)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js').catch(()=>console.log('SW registration failed'));
+}
+</script>
+</body>
+</html>
