@@ -85,9 +85,9 @@ const PLAN = [
     details: `
       <h3>Calentamiento (8 min)</h3>
       <ul>
-        <li><input type="checkbox" id="mob_cadera"> Movilidad de cadera y tobillo</li>
-        <li><input type="checkbox" id="sentadillas_2x15"> 2×15 sentadillas con peso corporal</li>
-        <li><input type="checkbox" id="skips_saltos"> Skips + saltos suaves en el lugar</li>
+        <li><input type="checkbox"> Movilidad de cadera y tobillo</li>
+        <li><input type="checkbox"> 2×15 sentadillas con peso corporal</li>
+        <li><input type="checkbox"> Skips + saltos suaves en el lugar</li>
       </ul>
 
       <h3>Fuerza</h3>
@@ -112,9 +112,6 @@ const PLAN = [
       </ul>
     `
   },
-  <button onclick="localStorage.clear(); location.reload();">
-  Reiniciar progreso
-</button>
 
   {
     day: 2,
@@ -354,19 +351,6 @@ function renderNutrition(){
     c.appendChild(s);
   }
 }
-
-// Guardar el estado de los checkboxes
-document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-  const id = checkbox.id;
-
-  // Cargar el estado guardado
-  checkbox.checked = localStorage.getItem(id) === "true";
-
-  // Guardar cada vez que cambie
-  checkbox.addEventListener("change", () => {
-    localStorage.setItem(id, checkbox.checked);
-  });
-});
 
 // --- Calendar ---
 function renderCalendar(){
